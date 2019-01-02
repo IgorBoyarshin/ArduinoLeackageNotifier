@@ -12,41 +12,44 @@ const int WATER_THRESHOLD = 250;
 const uint8_t CODE_OK = B01101010;
 const uint8_t CODE_ALARM = B10111100;
 
-void setup() { 
-  vw_set_tx_pin(TX_PIN);
-  vw_setup(2000);
 
-  pinMode(LED_SENDING, OUTPUT);
-  pinMode(LED_ALARM, OUTPUT);
-  pinMode(WATER_CONTROL_PIN, OUTPUT);
+void setup() {
+    vw_set_tx_pin(TX_PIN);
+    vw_setup(2000);
+
+    pinMode(LED_SENDING, OUTPUT);
+    pinMode(LED_ALARM, OUTPUT);
+    pinMode(WATER_CONTROL_PIN, OUTPUT);
 }
 
 
 void loop() {
-  digitalWrite(WATER_CONTROL_PIN, HIGH);
-  delay(2);
-  int level = analogRead(SENSOR_ANALOG_PIN);
-  digitalWrite(WATER_CONTROL_PIN, LOW);  
-   
-  if (level > WATER_THRESHOLD) {
-    digitalWrite(LED_SENDING, HIGH);
-    digitalWrite(LED_ALARM, HIGH);
+    digitalWrite(WATER_CONTROL_PIN, HIGH);
+    delay(2);
+    int level = analogRead(SENSOR_ANALOG_PIN);
+    digitalWrite(WATER_CONTROL_PIN, LOW);
 
-    vw_send((uint8_t*) &CODE_ALARM, 1);
-    vw_wait_tx();
-    
-    digitalWrite(LED_SENDING, LOW);
-     
-    LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);   
-  } else { 
-    digitalWrite(LED_ALARM, LOW);
-    digitalWrite(LED_SENDING, HIGH);
-  
-    vw_send((uint8_t*) &CODE_OK, 1);
-    vw_wait_tx();
-  
-    digitalWrite(LED_SENDING, LOW);
-    
-    LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
-  }  
+    if (level > WATER_THRESHOLD) {
+        digitalWrite(LED_SENDING, HIGH);
+        digitalWrite(LED_ALARM, HIGH);
+
+        vw_send((uint8_t*) &CODE_ALARM, 1);
+        vw_wait_tx();
+
+        digitalWrite(LED_SENDING, LOW);
+
+        LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
+    } else {
+        digitalWrite(LED_SENDING, HIGH);
+        digitalWrite(LED_ALARM, LOW);
+
+        vw_send((uint8_t*) &CODE_OK, 1);
+        digitalWrite(LED_ALARM, HIGH);
+        vw_wait_tx();
+        digitalWrite(LED_ALARM, LOW);
+
+        digitalWrite(LED_SENDING, LOW);
+
+        LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+    }
 }

@@ -53,11 +53,11 @@ void loop() {
     const uint16_t waterLevel = analogRead(WATER_SENSOR_PIN);
     digitalWrite(WATER_CONTROL_PIN, LOW);
 
-    if (waterLevel > WATER_THRESHOLD) {        
+    if (waterLevel > WATER_THRESHOLD) {
         digitalWrite(LED_ALARM_PIN, HIGH);
         if (!smsMasterSent) {
             smsMasterSent = true;
-            turnSimAndSendSms(LEACKAGE_MESSAGE_MASTER);            
+            turnSimAndSendSms(LEACKAGE_MESSAGE_MASTER);
         }
         masterLeackage = true;
     } else {
@@ -72,28 +72,31 @@ void loop() {
     digitalWrite(RX_CONTROL_PIN, HIGH);
     delay(2); // just in case the device needs some time to turn on
     for (unsigned int i = 0; i < 5; i++) {
-      delay(500);
-      if (vw_get_message(buff, &buffLength)) {
-          digitalWrite(LED_RECEIVING_PIN, HIGH);
-          delay(2); // to make the LED more visible
-          switch (buff[0]) {
-              case CODE_OK:
-                  slaveLeackage = false;
-                  break;
-              case CODE_ALARM:                  
-                  digitalWrite(LED_ALARM_PIN, HIGH);
-                  if (!smsSlaveSent) {
-                      smsSlaveSent = true;
-                      turnSimAndSendSms(LEACKAGE_MESSAGE_SLAVE);
-                  }
-                  slaveLeackage = true;
-                  break;
-              default:
-                  // Received incorrect message
-                  break;
-          }
-          digitalWrite(LED_RECEIVING_PIN, LOW);
-      }
+        delay(500);
+        if (vw_get_message(buff, &buffLength)) {
+            digitalWrite(LED_RECEIVING_PIN, HIGH);
+            delay(2); // to make the LED more visible
+            switch (buff[0]) {
+                case CODE_OK:
+                    slaveLeackage = false;
+                    break;
+                case CODE_ALARM:
+                    digitalWrite(LED_ALARM_PIN, HIGH);
+                    if (!smsSlaveSent) {
+                        smsSlaveSent = true;
+                        turnSimAndSendSms(LEACKAGE_MESSAGE_SLAVE);
+                    }
+                    slaveLeackage = true;
+                    break;
+                default:
+                    digitalWrite(LED_ALARM_PIN, HIGH);
+                    delay(600);
+                    digitalWrite(LED_ALARM_PIN, LOW);
+                    // Received incorrect message
+                    break;
+            }
+            digitalWrite(LED_RECEIVING_PIN, LOW);
+        }
     }
     digitalWrite(RX_CONTROL_PIN, LOW);
 
@@ -102,26 +105,26 @@ void loop() {
         smsSlaveSent = false;
         digitalWrite(LED_ALARM_PIN, LOW);
         digitalWrite(SIM_CONTROL_PIN, LOW);
-        LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);        
+        LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
     } else { // all FUBAR
         //LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
         delay(1000);
         if (SIM800.available()) {
-          SIM800.readString();
-        }        
+            SIM800.readString();
+        }
     }
 }
 //-----------------------------------------------------------------------------
-void turnSimAndSendSms(String message) {  
-    digitalWrite(SIM_CONTROL_PIN, HIGH);    
-  if (!(masterLeackage || slaveLeackage)) { // if the module is not already running
-    delay(1000); // just in case the device needs some time to turn on
-    initSim();
-  }
+void turnSimAndSendSms(String message) {
+    digitalWrite(SIM_CONTROL_PIN, HIGH);
+    if (!(masterLeackage || slaveLeackage)) { // if the module is not already running
+        delay(1000); // just in case the device needs some time to turn on
+        initSim();
+    }
     sendSms(TELEPHONE_NUMBER, message);
-    //waitResponse();
+    // waitResponse();
 
-//    digitalWrite(SIM_CONTROL_PIN, LOW);
+    // digitalWrite(SIM_CONTROL_PIN, LOW);
 }
 //-----------------------------------------------------------------------------
 void initSim() {
@@ -163,4 +166,3 @@ String waitResponse() {
 
     return response;
 }
-
